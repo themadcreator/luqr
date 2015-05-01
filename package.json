@@ -1,6 +1,6 @@
 {
   "name": "luqr",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "LU, LDL, and QR Matrix Decomposer and Solver",
   "main": "luqr.min.js",
   "author": "themadcreator@github",

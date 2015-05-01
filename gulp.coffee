@@ -13,6 +13,7 @@ map        = require 'vinyl-map'
 {exec}     = require 'child_process'
 {literate} = require './site/literator'
 
+GET_VERSION = -> JSON.parse(require('fs').readFileSync('./version.json', 'UTF-8'))
 
 ### TEST ###
 
@@ -23,7 +24,7 @@ gulp.task 'test', ->
 ### BUILD ###
 
 gulp.task 'build', ->
-  {version} = require './version.json'
+  {version} = GET_VERSION()
   options   =
     version   : version
     year      : new Date().getFullYear()
@@ -70,28 +71,21 @@ gulp.task 'bump-version', ->
     .pipe(gulp.dest('./'))
 
 gulp.task 'set-versions', ->
-  options = require './version.json'
+  options = GET_VERSION()
   gulp.src(['./package.json', './bower.json'])
     .pipe(bump(options))
     .pipe(gulp.dest('./'))
 
 gulp.task 'git-commit', ->
-  {version} = require './version.json'
+  {version} = GET_VERSION()
   return gulp.src('.').pipe(git.commit("Bumped version for release #{version}", {args: '-a'}))
 
 gulp.task 'git-tag', (cb) ->
-  {version} = require './version.json'
+  {version} = GET_VERSION()
   git.tag version, "Created tag for release #{version}", (cb)
 
 gulp.task 'git-push', (cb) ->
   git.push('origin', 'master', {args : '--tags'}, cb)
-
-gulp.task 'git-release', [
-  'set-versions'
-  'git-commit'
-  'git-tag'
-  'git-push'
-], -> return
 
 gulp.task 'publish-gh-pages', [
   'render-gh-pages'
@@ -109,7 +103,9 @@ gulp.task 'publish', [
   'test'
   'set-versions'
   'build'
-  'git-release'
+  'git-commit'
+  'git-tag'
+  'git-push'
   'publish-npm'
   'publish-bower'
   'publish-gh-pages'
@@ -123,8 +119,8 @@ DEV_TASKS = [
   'serve-gh-pages'
 ]
 
-gulp.task 'serve-gh-pages', ['render-gh-pages', 'copy-gh-pages-assets'], ->
-  exec 'npm run serve'
+gulp.task 'serve-gh-pages', ['render-gh-pages', 'copy-gh-pages-assets'], (cb) ->
+  exec 'npm run serve',
 
 gulp.task 'watch', DEV_TASKS, ->
   gulp.watch(['./luqr.coffee.md', 'test/**', 'site/**'], DEV_TASKS)
