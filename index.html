@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>LU, LDL, QR, and Solver</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  
+    <link rel="stylesheet" media="all" href="css/docco.css" />
+  
+    <link rel="stylesheet" media="all" href="css/katex.min.css" />
+  
+    <link rel="stylesheet" media="all" href="css/normalize.css" />
+  
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      
+        
+        <h1 id="matrix-decomposer-and-solver">Matrix Decomposer and Solver</h1>
+<p>This javascript library decomposes a matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> using <strong>LU</strong>,
+<strong>LDL</strong>, or <strong>QR</strong> decomposition and solves linear matrix equations such as
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span>.</p>
+<p>Written in <strong>literate coffescript</strong>, this document is generated directly from the
+library source.</p>
+<p>100% unit test coverage for correctness and compatibility. No outside dependencies.</p>
+<p><a href="https://github.com/themadcreator/luqr">github repository</a></p>
+<h3 id="installation">Installation</h3>
+<pre><code><span class="hljs-built_in">npm</span> install luqr
+</code></pre><p>or</p>
+<pre><code>bower install luqr
+</code></pre><p>or</p>
+<p><a href="">download minified javascript</a></p>
+<h3 id="usage">Usage</h3>
+<p>For example, to decompose a matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> into lower and upper
+triangular matrices:</p>
+<pre><code>luqr = <span class="hljs-built_in">require</span>(<span class="hljs-string">'luqr'</span>).luqr
+
+A = [
+  [<span class="hljs-number">1</span>, <span class="hljs-number">1</span>,  <span class="hljs-number">1</span>]
+  [<span class="hljs-number">0</span>, <span class="hljs-number">2</span>,  <span class="hljs-number">5</span>]
+  [<span class="hljs-number">2</span>, <span class="hljs-number">5</span>, -<span class="hljs-number">1</span>]
+]
+
+{L, U} = luqr.decomposeLU(A)
+</code></pre><p>Then, <code>L</code> is</p>
+<pre><code>[
+  [<span class="hljs-number">1</span>,   <span class="hljs-number">0</span>, <span class="hljs-number">0</span>]
+  [<span class="hljs-number">0</span>,   <span class="hljs-number">1</span>, <span class="hljs-number">0</span>]
+  [<span class="hljs-number">2</span>, <span class="hljs-number">1.5</span>, <span class="hljs-number">1</span>]
+]
+</code></pre><p><code>U</code> is</p>
+<pre><code>[
+  [<span class="hljs-number">1</span>, <span class="hljs-number">1</span>,     <span class="hljs-number">1</span>]
+  [<span class="hljs-number">0</span>, <span class="hljs-number">2</span>,     <span class="hljs-number">5</span>]
+  [<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, -<span class="hljs-number">10.5</span>]
+]
+</code></pre><p>And, for example, to solve <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span>:</p>
+<pre><code>b = [<span class="hljs-number">6</span>, -<span class="hljs-number">4</span>, <span class="hljs-number">27</span>]
+x = luqr.solve(A, b)
+</code></pre><p>then <code>x</code> is</p>
+<pre><code>[<span class="hljs-number">5</span>, <span class="hljs-number">3</span>, -<span class="hljs-number">2</span>]
+</code></pre><h3 id="what-s-the-difference-between-lu-ldl-and-qr-decomposition-">What&#39;s the Difference between LU, LDL, and QR decomposition?</h3>
+<p><strong>LU Decomposition</strong> decomposes a <strong>square</strong> matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> into a lower
+triangular matrix, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span></span></span></span>, and an upper triangular matrix, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>U</mi></mrow><annotation encoding="application/x-tex">U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.10903em;">U</span></span></span></span>,
+such that <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mo>=</mo><mi>L</mi><mi>U</mi></mrow><annotation encoding="application/x-tex">A = L U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mrel">=</span><span class="mord mathit">L</span><span class="mord mathit" style="margin-right:0.10903em;">U</span></span></span></span>. To solve a linear equation like
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span> we can use forward substition to solve <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi><mi>y</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">L y = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span><span class="mord mathit" style="margin-right:0.03588em;">y</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span>
+for <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span>, then backward subtitution to solve <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>U</mi><mi>x</mi><mo>=</mo><mi>y</mi></mrow><annotation encoding="application/x-tex">U x = y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.10903em;">U</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span> for
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span></span></span></span>.</p>
+<p><strong>LDL Decomposition</strong>, on the other hand, decomposes a <strong>square</strong>,
+<strong>symmetric</strong> matrix into a lower triangular matrix, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span></span></span></span>, and a
+diagonal matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.02778em;">D</span></span></span></span>, such that <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mo>=</mo><mi>L</mi><mi>D</mi><msup><mi>L</mi><mo>⊺</mo></msup></mrow><annotation encoding="application/x-tex">A = L D L^\intercal</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mrel">=</span><span class="mord mathit">L</span><span class="mord mathit" style="margin-right:0.02778em;">D</span><span class="mord"><span class="mord mathit">L</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord amsrm">⊺</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span>. To
+solve a linear equation like <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span> we can use forward substition
+to solve <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi><mi>y</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">L y = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span><span class="mord mathit" style="margin-right:0.03588em;">y</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span> for <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span>, then solve diagonal <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>D</mi><mi>z</mi><mo>=</mo><mi>y</mi></mrow><annotation encoding="application/x-tex">D z = y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.02778em;">D</span><span class="mord mathit" style="margin-right:0.04398em;">z</span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span>
+for <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>z</mi></mrow><annotation encoding="application/x-tex">z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.04398em;">z</span></span></span></span>, then finally use backward subtitution to solve
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>L</mi><mo>⊺</mo></msup><mi>x</mi><mo>=</mo><mi>z</mi></mrow><annotation encoding="application/x-tex">L^\intercal x = z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit">L</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord amsrm">⊺</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.04398em;">z</span></span></span></span> for <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span></span></span></span>.</p>
+<p><strong>QR Decomposition</strong> decomposes any m-by-n matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> into an m-by-m
+matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">Q</span></span></span></span> whose columns are orthogonal unit vectors and an m-by-n
+upper triangular matrix, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span></span>, such that <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mo>=</mo><mi>Q</mi><mi>R</mi></mrow><annotation encoding="application/x-tex">A = Q R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mrel">=</span><span class="mord mathit">Q</span><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span></span>. Works for
+both overdetermined and underdetermined matrices. To solve a linear equation
+like <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span>, our algorithm produces a partial result <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>Q</mi><mi>R</mi></mrow><annotation encoding="application/x-tex">QR</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">Q</span><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span></span>
+from which we construct <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>Q</mi><mo>⊺</mo></msup><mi>b</mi><mo>=</mo><mi>y</mi></mrow><annotation encoding="application/x-tex">Q^\intercal b = y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit">Q</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord amsrm">⊺</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord mathit">b</span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span> then solve
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>R</mi><mi>x</mi><mo>=</mo><mi>y</mi></mrow><annotation encoding="application/x-tex">R x = y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.00773em;">R</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.03588em;">y</span></span></span></span> for <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.43056em;"></span><span class="strut bottom" style="height:0.43056em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">x</span></span></span></span>.</p>
+<h3 id="which-one-should-i-use-">Which one should I use?</h3>
+<p>If you aren&#39;t sure, just use the <code>solve</code> method, and it will choose the best
+decomposition method for you.</p>
+<p>Otherwise, this table may help you choose a decomposition method based on the
+characteristics of your matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span>.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Matrix Requirements</th>
+<th>Speed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LDL</td>
+<td>square, symmetric, non-singular</td>
+<td>Fastest</td>
+</tr>
+<tr>
+<td>LU</td>
+<td>square, non-singular</td>
+<td>Fast</td>
+</tr>
+<tr>
+<td>QR</td>
+<td>any</td>
+<td>Moderate</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what-about-cholesky-decomposition-">What about Cholesky Decomposition?</h3>
+<p>LDL decomposition is just as fast as Cholesky decomposition, but LDL avoids
+performing any square roots and is therefore faster and more numerically
+stable. For more, see this
+<a href="http://en.wikipedia.org/wiki/Cholesky_decomposition#LDL_decomposition">wikipedia article</a>.</p>
+<h3 id="compatibility">Compatibility</h3>
+<p>By default, all methods expect matrices to be an Array of Arrays or an Array
+of TypedArrays.</p>
+<p>But, since we want this library to be utilized across many different formats
+for matrix storage, we support input and output of flat or multidimensional
+Arrays or TypedArrays.</p>
+<p>To use a flat array, simply use the <code>fold</code> and <code>flatten</code> methods.</p>
+<pre><code>luqr = <span class="hljs-built_in">require</span>(<span class="hljs-string">'luqr'</span>).luqr
+
+<span class="hljs-comment"># A flat TypedArray representing a 3-by-3 matrix</span>
+flat = <span class="hljs-keyword">new</span> Float32Array([<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">0</span>, <span class="hljs-number">2</span>, <span class="hljs-number">5</span>, <span class="hljs-number">2</span>, <span class="hljs-number">5</span>, -<span class="hljs-number">1</span>])
+
+<span class="hljs-comment"># Fold the TypedArray</span>
+A = luqr.fold(flat, <span class="hljs-number">3</span>)
+
+<span class="hljs-comment"># Perform decomposition</span>
+{L, U} = luqr.decomposeLU(A)
+
+<span class="hljs-comment"># Flatten the output matrices. These will be Float32Arrays</span>
+L = luqr.flatten(L)
+U = luqr.flatten(U)
+</code></pre><h1 id="api">API</h1>
+<h2 id="module-wrapper">module wrapper</h2>
+
+        
+          <div class='highlight'><pre>(<span class="hljs-function"><span class="hljs-params">(namespace)</span> -&gt;</span></pre></div>
+        
+      
+        
+        <h2 id="decomposelu-a-">decomposeLU(A)</h2>
+<p>Decomposes a <strong>square</strong> matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> into a lower triangular matrix,
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span></span></span></span>, and an upper triangular matrix, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>U</mi></mrow><annotation encoding="application/x-tex">U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.10903em;">U</span></span></span></span>, such that
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mo>=</mo><mi>L</mi><mi>U</mi></mrow><annotation encoding="application/x-tex">A = L U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mrel">=</span><span class="mord mathit">L</span><span class="mord mathit" style="margin-right:0.10903em;">U</span></span></span></span>.</p>
+<h3 id="input-">Input:</h3>
+<ul>
+<li><code>A</code> : An n-length Array containing n-length Arrays or TypedArrays.</li>
+</ul>
+<h3 id="output-">Output:</h3>
+<p>Returns an <code>Object</code> that contains:</p>
+<ul>
+<li><code>L</code> : An Array containing the rows of the decomposition result L, a lower triangular matrix</li>
+<li><code>U</code> : An Array containing the rows of the decomposition result U, an upper triangular matrix</li>
+</ul>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">decomposeLU</span> = <span class="hljs-params">(A)</span> -&gt;</span>
+    <span class="hljs-comment"># Verify inputs. Require an n-by-n matrix `A`.</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span> <span class="hljs-keyword">unless</span> isSquareMatrix(A)
+
+    n = A.length
+    L = [<span class="hljs-number">0.</span>..n].map(<span class="hljs-function">-&gt;</span> copy(A[<span class="hljs-number">0</span>], <span class="hljs-function">-&gt;</span> <span class="hljs-number">0</span>))
+    U = [<span class="hljs-number">0.</span>..n].map(<span class="hljs-function">-&gt;</span> copy(A[<span class="hljs-number">0</span>], <span class="hljs-function">-&gt;</span> <span class="hljs-number">0</span>))
+
+    <span class="hljs-comment"># Initialize L's daigonal</span>
+    <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+      L[j][j] = <span class="hljs-number">1</span>
+
+    <span class="hljs-comment"># Initialize U's first row</span>
+    <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+      U[<span class="hljs-number">0</span>][j] = A[<span class="hljs-number">0</span>][j]
+
+    <span class="hljs-comment"># Doolittle's Algorithm</span>
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [<span class="hljs-number">1.</span>..n]
+      <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+
+        <span class="hljs-comment"># Fill in L's row up to i</span>
+        <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..i]
+          s = A[i][k]
+          <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..k]
+            s -= L[i][p] * U[p][k]
+          L[i][k] = s / U[k][k]
+
+        <span class="hljs-comment"># Fill in U's row from i to n</span>
+        <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [i...n]
+          s = A[i][k]
+          <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..i]
+            s -= L[i][p] * U[p][k]
+          U[i][k] = s
+
+    <span class="hljs-keyword">return</span> {L, U}</pre></div>
+        
+      
+        
+        <h2 id="decomposeldl-a-">decomposeLDL(A)</h2>
+<p>Decomposes a <strong>square</strong>, <strong>symmetric</strong> matrix into a lower triangular matrix,
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span></span></span></span>, and a diagonal matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.02778em;">D</span></span></span></span>, such that
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mo>=</mo><mi>L</mi><mi>D</mi><msup><mi>L</mi><mo>⊺</mo></msup></mrow><annotation encoding="application/x-tex">A = L D L^\intercal</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mrel">=</span><span class="mord mathit">L</span><span class="mord mathit" style="margin-right:0.02778em;">D</span><span class="mord"><span class="mord mathit">L</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord amsrm">⊺</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></p>
+<h3 id="input-">Input:</h3>
+<ul>
+<li><code>A</code> : An n-length Array containing n-length Arrays or TypedArrays.</li>
+</ul>
+<h3 id="output-">Output:</h3>
+<p>If no decomposition exists, this method returns <code>null</code>. Otherwise, it returns
+an <code>Object</code> that contains:</p>
+<ul>
+<li><code>L</code> : An Array containing the rows of the decomposition result matrix</li>
+<li><code>d</code> : An Array containing the diagonal elements of D</li>
+</ul>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">decomposeLDL</span> = <span class="hljs-params">(A)</span> -&gt;</span>
+    <span class="hljs-comment"># Verify inputs. Require an n-by-n symmetric matrix `A`.</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span> <span class="hljs-keyword">unless</span> isSquareMatrix(A) <span class="hljs-keyword">and</span> isSymmetricMatrix(A)
+
+    <span class="hljs-comment"># Intialize outputs matrix `L` and diagonal array `d`.</span>
+    n = A.length
+    L = [<span class="hljs-number">0.</span>..n].map(<span class="hljs-function">-&gt;</span> copy(A[<span class="hljs-number">0</span>], <span class="hljs-function">-&gt;</span> <span class="hljs-number">0</span>))
+    d = copy(A[<span class="hljs-number">0</span>], <span class="hljs-function">-&gt;</span> <span class="hljs-number">0</span>)
+
+    <span class="hljs-comment"># For each row in `L`:</span>
+    <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+
+      <span class="hljs-comment"># Compute diagonal of `L` and `D`.</span>
+      L[j][j] = <span class="hljs-number">1</span>
+      a       = A[j][j]
+      <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..j]
+        a -= d[k] * L[j][k] * L[j][k]
+      d[j] = a
+
+      <span class="hljs-comment"># If diagonal `d[j]` is zero, then `A` has no decomposition.</span>
+      <span class="hljs-comment"># So, return `null`.</span>
+      <span class="hljs-keyword">if</span> d[j] <span class="hljs-keyword">is</span> <span class="hljs-number">0</span> <span class="hljs-keyword">then</span> <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>
+
+      <span class="hljs-comment"># Zero rest of row and adjust further rows of `L`.</span>
+      <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [(j + <span class="hljs-number">1</span>)...n]
+        L[j][i] = <span class="hljs-number">0</span>
+        a       = A[i][j]
+        <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..j]
+          a -= d[k] * L[i][k] * L[j][k]
+        L[i][j] = a / d[j]
+
+    <span class="hljs-comment"># Finally, return decomposition.</span>
+    <span class="hljs-keyword">return</span> {L, d}</pre></div>
+        
+      
+        
+        <h2 id="decomposeqrpartial-a-">decomposeQRPartial(A)</h2>
+<p>Decomposes any m-by-n matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> into an m-by-m matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">Q</span></span></span></span>
+whose columns are orthogonal unit vectors and an m-by-n upper triangular
+matrix, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span></span>, such that <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mo>=</mo><mi>Q</mi><mi>R</mi></mrow><annotation encoding="application/x-tex">A = Q R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mrel">=</span><span class="mord mathit">Q</span><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span></span>. Works for both
+overdetermined and underdetermined matrices.</p>
+<p>This algorithm uses the <em>Householder Reflections</em> approach which is more
+stable than the <em>Gram–Schmidt</em> process. For more, see this <a href="http://en.wikipedia.org/wiki/QR_decomposition">wikipedia article</a>.</p>
+<p>The output is somewhat awkward, but it is not necessary to completely
+construct <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">Q</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span></span> to solve <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span>.</p>
+<p>This method based on <a href="https://github.com/lutzroeder/Mapack/blob/master/Source/QrDecomposition.cs">this mapack implementation</a></p>
+<h3 id="input-">Input:</h3>
+<ul>
+<li><code>A</code> : An m-length Array containing n-length Arrays or TypedArrays.</li>
+</ul>
+<h3 id="output-">Output:</h3>
+<p>Returns an <code>Object</code> that contains:</p>
+<ul>
+<li><code>QR</code> : An Array containing the rows of the decomposition result QR. The
+lower triangular part contains the essential components of Q as well as
+most of R in the upper triangular part.</li>
+<li><code>d</code> : An Array containing the remanining diagonal components of R.</li>
+<li><code>singular</code> : A boolean indicating weather or not the matrix A is singular.
+algorithm will still produce a value for Q and R regardless.</li>
+</ul>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">decomposeQRPartial</span> = <span class="hljs-params">(A)</span> -&gt;</span>
+    QR       = copy(A, <span class="hljs-function"><span class="hljs-params">(a)</span> -&gt;</span> copy(a))
+    m        = A.length
+    n        = A[<span class="hljs-number">0</span>].length
+    d        = [<span class="hljs-number">0.</span>..m].map -&gt; <span class="hljs-number">0</span>
+    singular = <span class="hljs-literal">false</span>
+
+    <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+      <span class="hljs-comment"># Compute 2-norm of k-th column.</span>
+      <span class="hljs-comment"># TODO use hypotenuse to avoid over/underflow</span>
+      sum = <span class="hljs-number">0</span>
+      <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k...m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+        sum += QR[i][k] * QR[i][k]
+      nrm = Math.sqrt(sum)
+
+      <span class="hljs-comment"># Detect singular case.</span>
+      <span class="hljs-keyword">if</span> nrm <span class="hljs-keyword">is</span> <span class="hljs-number">0.0</span>
+        d[k]     = <span class="hljs-number">0</span>
+        singular = <span class="hljs-literal">true</span>
+        <span class="hljs-keyword">continue</span>
+
+      <span class="hljs-comment"># Form k-th Householder vector.</span>
+      <span class="hljs-keyword">if</span> QR[k][k] &lt; <span class="hljs-number">0</span> <span class="hljs-keyword">then</span> nrm *= -<span class="hljs-number">1</span>
+      <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k...m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+        QR[i][k] /= nrm
+      QR[k][k] += <span class="hljs-number">1.0</span>
+
+      <span class="hljs-comment"># Apply transformation to remaining columns.</span>
+      <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [(k+<span class="hljs-number">1</span>)...n] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+        sum = <span class="hljs-number">0</span>
+        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k...m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+          sum += QR[i][k] * QR[i][j]
+        sum = -sum / QR[k][k]
+
+        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k...m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+          QR[i][j] += sum * QR[i][k]
+
+      d[k] = -nrm
+    <span class="hljs-keyword">return</span> {QR, d, singular}</pre></div>
+        
+      
+        
+        <h2 id="decomposeqr-a-">decomposeQR(A)</h2>
+<p>Decomposes any m-by-n matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> into an m-by-m matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">Q</span></span></span></span>
+whose columns are orthogonal unit vectors and an m-by-n upper triangular
+matrix, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span></span>, such that <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mo>=</mo><mi>Q</mi><mi>R</mi></mrow><annotation encoding="application/x-tex">A = Q R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mrel">=</span><span class="mord mathit">Q</span><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span></span>. Works for both
+overdetermined and underdetermined matrices.</p>
+<p>This method computes the partial solution and then constructs the matrices
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>Q</mi></mrow><annotation encoding="application/x-tex">Q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord mathit">Q</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>R</mi></mrow><annotation encoding="application/x-tex">R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.00773em;">R</span></span></span></span>.</p>
+<h3 id="input-">Input:</h3>
+<ul>
+<li><code>A</code> : An m-length Array containing n-length Arrays or TypedArrays.</li>
+</ul>
+<h3 id="output-">Output:</h3>
+<p>Returns an <code>Object</code> that contains:</p>
+<ul>
+<li><code>Q</code> : An Array containing the rows of the decomposition result Q, whose
+columns are orthogonal unit vectors and an upper triangular matrix. i.e.
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><msup><mi>Q</mi><mo>⊺</mo></msup><mi>Q</mi><mo>=</mo><mi>I</mi></mrow><annotation encoding="application/x-tex">Q^\intercal Q = I</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.8777699999999999em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit">Q</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord amsrm">⊺</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord mathit">Q</span><span class="mrel">=</span><span class="mord mathit" style="margin-right:0.07847em;">I</span></span></span></span></li>
+<li><code>R</code> : An m-by-n Array containing decomposition result R, an upper triangular matrix</li>
+<li><code>singular</code> : A boolean indicating weather or not the matrix A is singular. This
+algorithm will still produce a value for Q and R regardless.</li>
+</ul>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">decomposeQR</span> = <span class="hljs-params">(A)</span> -&gt;</span>
+    {QR, d, singular} = decomposeQRPartial(A)
+    m = A.length
+    n = A[<span class="hljs-number">0</span>].length
+
+    <span class="hljs-comment"># Create m-by-n upper triangular matrix R.</span>
+    R = reshape(m, n, A[<span class="hljs-number">0</span>])
+
+    <span class="hljs-comment"># Fill in R</span>
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..m]
+      <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+        <span class="hljs-keyword">if</span> i &lt; j <span class="hljs-keyword">or</span> j &gt;= m <span class="hljs-keyword">then</span> R[i][j] = QR[i][j]
+        <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> i <span class="hljs-keyword">is</span> j <span class="hljs-keyword">then</span> R[i][j] = d[i]
+        <span class="hljs-keyword">else</span> R[i][j] = <span class="hljs-number">0</span>
+
+    <span class="hljs-comment"># Create the orthogonal matrix Q.</span>
+    Q = reshape(m, m, A[<span class="hljs-number">0</span>])
+
+    <span class="hljs-comment"># Construct the rest of Q</span>
+    <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [(m - <span class="hljs-number">1</span>)..<span class="hljs-number">0</span>] <span class="hljs-keyword">by</span> -<span class="hljs-number">1</span>
+      <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+        Q[i][k] = <span class="hljs-number">0.0</span>
+
+      Q[k][k] = <span class="hljs-number">1.0</span>
+      <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [k...m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> (j &lt; m) <span class="hljs-keyword">then</span> <span class="hljs-keyword">continue</span>
+        <span class="hljs-keyword">if</span> QR[k][k] <span class="hljs-keyword">isnt</span> <span class="hljs-number">0</span> <span class="hljs-keyword">and</span> QR[k]?[k]?
+          s = <span class="hljs-number">0</span>
+          <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k...m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+            s += QR[i][k] * Q[i][j]
+          s = -s / QR[k][k]
+
+          <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k...m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+            Q[i][j] += s * QR[i][k]
+
+    <span class="hljs-keyword">return</span> {Q, R, singular}</pre></div>
+        
+      
+        
+        <h2 id="solve-a-b-">solve(A,b)</h2>
+<p>Solves a system of linear equations expressed by the matrix equation <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span>.</p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> is an m-by-n matrix and <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">b</span></span></span></span> is a 1-by-n vector.</p>
+<h3 id="input-">Input:</h3>
+<ul>
+<li><code>A</code> : An m-length Array containing n-length Arrays or TypedArrays.</li>
+<li><code>b</code> : An n-length Array or TypedArray</li>
+</ul>
+<h3 id="output">Output</h3>
+<ul>
+<li><code>x</code> : An n-length Array or TypedArray withe the solution or <code>null</code> if no solution exists.</li>
+</ul>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">solve</span> = <span class="hljs-params">(A, b)</span> -&gt;</span>
+    <span class="hljs-comment"># Verify inputs. Require an m-by-n matrix `A` and 1-by-n vector `b`.</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span> <span class="hljs-keyword">unless</span> b.length <span class="hljs-keyword">is</span> A.length
+
+    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> isSquareMatrix(A)
+      <span class="hljs-keyword">return</span> solveQR(A, b)
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> isSymmetricMatrix(A)
+      <span class="hljs-keyword">return</span> solveLDL(A, b)
+    <span class="hljs-keyword">else</span>
+      <span class="hljs-keyword">return</span> solveLU(A, b)</pre></div>
+        
+      
+        
+        <h2 id="solvelu-a-b-">solveLU(A,b)</h2>
+<p>Solves <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span> using LU decomposition.</p>
+<p>Same input/output as <code>solve</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">solveLU</span> = <span class="hljs-params">(A, b)</span> -&gt;</span>
+    <span class="hljs-comment"># Decompose `A` into `L * U`</span>
+    res = decomposeLU(A)
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span> <span class="hljs-keyword">unless</span> res?
+    {L, U} = res
+
+    <span class="hljs-comment"># Solve `L * y = b`.</span>
+    y = forwardSubstition(L, b)
+
+    <span class="hljs-comment"># Solve `U * x = y`.</span>
+    x = backwardSubtitution(U, y)
+
+    <span class="hljs-keyword">return</span> x</pre></div>
+        
+      
+        
+        <h2 id="solveldl-a-b-">solveLDL(A,b)</h2>
+<p>Solves <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span> using LDL decomposition. Note that <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> must be <strong>symmetric</strong>.</p>
+<p>Same input/output as <code>solve</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">solveLDL</span> = <span class="hljs-params">(A, b)</span> -&gt;</span>
+    <span class="hljs-comment"># Decompose `A` into `L * D * L'`</span>
+    res = decomposeLDL(A)
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span> <span class="hljs-keyword">unless</span> res?
+    {L, d} = res
+
+    <span class="hljs-comment"># Solve `L * y = b`.</span>
+    y = forwardSubstition(L, b)
+
+    <span class="hljs-comment"># Solve `L * z = y`.</span>
+    z = copy(y, <span class="hljs-function"><span class="hljs-params">(yi, i)</span> -&gt;</span> yi / d[i])
+
+    <span class="hljs-comment"># Solve `U * x = y`.</span>
+    x = backwardSubtitution(L, z, transposed = <span class="hljs-literal">true</span>)
+
+    <span class="hljs-keyword">return</span> x</pre></div>
+        
+      
+        
+        <h2 id="solveqr-a-b-">solveQR(A,b)</h2>
+<p>Solves <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">A x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span> using QR decomposition. Note that <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> may
+be any m-by-n matrix.</p>
+<p>In the case that <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">A</span></span></span></span> is overdetermined, this method produces the
+least-squares estimate of the solution, i.e. it minimizes
+<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mo>∥</mo><mi>A</mi><mi>x</mi><mo>−</mo><mi>b</mi><mo>∥</mo></mrow><annotation encoding="application/x-tex">\parallel A x - b \parallel</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.75em;"></span><span class="strut bottom" style="height:1em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mrel">∥</span><span class="mord mathit">A</span><span class="mord mathit">x</span><span class="mbin">−</span><span class="mord mathit">b</span><span class="mrel">∥</span></span></span></span>.</p>
+<p>Same input/output as <code>solve</code>.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">solveQR</span> = <span class="hljs-params">(A, b)</span> -&gt;</span>
+    {QR, d} = decomposeQRPartial(A)
+
+    y = copy(b)
+    m = QR.length
+    n = QR[<span class="hljs-number">0</span>].length
+
+    <span class="hljs-comment"># Only use m columns if underdetermined.</span>
+    cols = <span class="hljs-keyword">if</span> m &lt; n <span class="hljs-keyword">then</span> m <span class="hljs-keyword">else</span> n
+
+    <span class="hljs-comment"># Compute y = Q' * b for y</span>
+    <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..cols] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+      sum = <span class="hljs-number">0</span>
+      <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k...m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+        sum += QR[i][k] * y[i]
+      sum = -sum / QR[k][k]
+      <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [k...m] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+        y[i] += sum * QR[i][k]
+
+    <span class="hljs-comment"># Solve R * x = y for x</span>
+    x = copy(y)
+    <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [(cols-<span class="hljs-number">1</span>)..<span class="hljs-number">0</span>] <span class="hljs-keyword">by</span> -<span class="hljs-number">1</span>
+      x[k] /= d[k]
+      <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..k]
+        x[i] -= x[k] * QR[i][k]
+
+    <span class="hljs-comment"># Fill in zeros for the underdetermined case.</span>
+    <span class="hljs-keyword">if</span> m &lt; n
+      <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> [cols...n] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+        x[k] = <span class="hljs-number">0</span>
+
+    <span class="hljs-comment"># Finally, truncate for the result to match the column count of A for</span>
+    <span class="hljs-comment"># the overdetermined case.</span>
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> n &lt; m
+      x = x.slice(<span class="hljs-number">0</span>, n)
+
+    <span class="hljs-keyword">return</span> x</pre></div>
+        
+      
+        
+        <h2 id="forwardsubstition-l-b-">forwardSubstition(L, b)</h2>
+<p>Performs forward substitution with n-by-n lower triangular matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span></span></span></span> and
+1-by-n vector <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">b</span></span></span></span> to solve <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">L x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span> .</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">forwardSubstition</span> = <span class="hljs-params">(L, b)</span> -&gt;</span>
+    n = L.length
+    x = copy(b, <span class="hljs-function">-&gt;</span> <span class="hljs-number">0</span>)
+
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+      x[i] = b[i]
+      <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..i]
+        x[i] -= x[j] * L[i][j]
+      x[i] /= L[i][i]
+
+    <span class="hljs-keyword">return</span> x</pre></div>
+        
+      
+        
+        <h2 id="backwardsubtitution-u-b-transposed-false-">backwardSubtitution(U, b, [transposed = false])</h2>
+<p>Performs back substitution with n-by-n upper triangular matrix <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>U</mi></mrow><annotation encoding="application/x-tex">U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.10903em;">U</span></span></span></span>
+and 1-by-n vector <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>b</mi></mrow><annotation encoding="application/x-tex">b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">b</span></span></span></span> to solve <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>U</mi><mi>x</mi><mo>=</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">U x = b</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.69444em;"></span><span class="strut bottom" style="height:0.69444em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.10903em;">U</span><span class="mord mathit">x</span><span class="mrel">=</span><span class="mord mathit">b</span></span></span></span>. When used with LDL
+decomposition, <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>U</mi><mo>=</mo><msup><mi>L</mi><mo>⊺</mo></msup></mrow><annotation encoding="application/x-tex">U = L^\intercal</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.10903em;">U</span><span class="mrel">=</span><span class="mord"><span class="mord mathit">L</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord amsrm">⊺</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span> is actually <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>L</mi></mrow><annotation encoding="application/x-tex">L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.68333em;"></span><span class="strut bottom" style="height:0.68333em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mathit">L</span></span></span></span>, so we
+transpose to coordinates on lookup.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">backwardSubtitution</span> = <span class="hljs-params">(U, b, transposed = <span class="hljs-literal">false</span>)</span> -&gt;</span>
+    n = U.length
+    x = copy(b, <span class="hljs-function">-&gt;</span> <span class="hljs-number">0</span>)
+
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [(n-<span class="hljs-number">1</span>)..<span class="hljs-number">0</span>] <span class="hljs-keyword">by</span> -<span class="hljs-number">1</span>
+      x[i] = b[i]
+      <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [(i + <span class="hljs-number">1</span>)...n] <span class="hljs-keyword">by</span> <span class="hljs-number">1</span>
+        x[i] -= x[j] * (<span class="hljs-keyword">if</span> transposed <span class="hljs-keyword">then</span> U[j][i] <span class="hljs-keyword">else</span> U[i][j])
+      x[i] /= U[i][i]
+
+    <span class="hljs-keyword">return</span> x</pre></div>
+        
+      
+        
+        <h2 id="utility-methods">Utility methods</h2>
+<p>We verify that the inputs to our <code>solve</code> and <code>decompose</code> methods are actually
+n-by-n matrices. LDL further requires a symmetric matrix.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">isSquareMatrix</span> = <span class="hljs-params">(A)</span> -&gt;</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span> <span class="hljs-keyword">unless</span> Array.isArray(A)
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span> <span class="hljs-keyword">unless</span> A.length &gt; <span class="hljs-number">0</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span> <span class="hljs-keyword">unless</span> A[<span class="hljs-number">0</span>].length <span class="hljs-keyword">is</span> A.length
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>
+<span class="hljs-function">
+  <span class="hljs-title">isSymmetricMatrix</span> = <span class="hljs-params">(A)</span> -&gt;</span>
+    n = A.length
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+      <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+        <span class="hljs-keyword">if</span> j <span class="hljs-keyword">isnt</span> i <span class="hljs-keyword">and</span> A[i][j] <span class="hljs-keyword">isnt</span> A[j][i] <span class="hljs-keyword">then</span> <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span></pre></div>
+        
+      
+        
+        <p>In order to support multiple matrix data types, we use this <code>copy</code> method to
+construct new Arrays or TypedArrays. This method creates a new instance of <code>x</code>&#39;s
+type, and then copies its elements, which are optionally passed through a <code>map</code>
+method.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">copy</span> = <span class="hljs-params">(x, map)</span> -&gt;</span>
+    y = x.constructor.apply(<span class="hljs-literal">null</span>, [x.length])
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..x.length] <span class="hljs-keyword">then</span> <span class="hljs-keyword">do</span> -&gt; y[i] = map?(x[i], i) ? x[i]
+    <span class="hljs-keyword">return</span> y</pre></div>
+        
+      
+        
+        <p>Furthermore, for QR decomposition, we need to create arbitrary m-by-n matrices
+using the internal Array or TypedArray type.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">reshape</span> = <span class="hljs-params">(rows, cols, typedObject)</span> -&gt;</span>
+    <span class="hljs-keyword">return</span> [<span class="hljs-number">0.</span>..rows].map -&gt;
+     y = typedObject.constructor.apply(<span class="hljs-literal">null</span>, [cols])
+     <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..cols] <span class="hljs-keyword">then</span> y[i] = <span class="hljs-number">0</span>
+     <span class="hljs-keyword">return</span> y</pre></div>
+        
+      
+        
+        <p>In order to support multiple matrix layouts, we use this <code>fold</code> method to fold
+an Array or TypedArray of length <code>n * width</code> into an Array of rows with
+<code>width</code> elements each.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">fold</span> = <span class="hljs-params">(array, width = <span class="hljs-number">1</span>)</span> -&gt;</span>
+    folder = array.slice ? array.subarray
+    A = <span class="hljs-keyword">for</span> n <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..array.length] <span class="hljs-keyword">by</span> width <span class="hljs-keyword">then</span> <span class="hljs-keyword">do</span> -&gt;
+      folder.apply(array, [n, n + width])
+    <span class="hljs-keyword">return</span> A</pre></div>
+        
+      
+        
+        <p>The <code>flatten</code> method will combine a row-major Array of arrays and flatten it
+back into the type of the folded array.</p>
+
+        
+          <div class='highlight'><pre><span class="hljs-function">  <span class="hljs-title">flatten</span> = <span class="hljs-params">(matrix)</span> -&gt;</span>
+    n = matrix.length
+    array = matrix[<span class="hljs-number">0</span>].constructor.apply(<span class="hljs-literal">null</span>, [n*n])
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+      <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> [<span class="hljs-number">0.</span>..n]
+        array[i * n + j] = matrix[i][j]
+    <span class="hljs-keyword">return</span> array</pre></div>
+        
+      
+        
+        <h2 id="exports">Exports</h2>
+<p>This library uses universal module export syntax. This will work in node.js
+(CommonJS), ADMs (RequireJS), and a <code>&lt;script&gt;</code> in the browser.</p>
+
+        
+          <div class='highlight'><pre>  namespace.luqr = {
+    solve
+    solveLU
+    solveLDL
+    solveQR
+    decomposeLU
+    decomposeLDL
+    decomposeQR
+    decomposeQRPartial
+    forwardSubstition
+    backwardSubtitution
+    fold
+    flatten
+  }
+
+)(<span class="hljs-keyword">this</span>)</pre></div>
+        
+      
+        
+        <p>© themadcreator@github</p>
+
+        
+      
+
+    </div>
+  </div>
+</body>
+</html>
