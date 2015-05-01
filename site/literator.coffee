@@ -12,9 +12,7 @@ templateHelpers = {
   tex : (txt) -> katex.renderToString(txt)
 }
 
-render = (target) ->
-  {source} = target
-
+literate = (code, source, options) ->
   # create docco config
   config = {
     marked    :
@@ -32,7 +30,6 @@ render = (target) ->
   }
 
   # parse using docco
-  code     = fs.readFileSync(source, 'UTF-8')
   sections = docco.parse source, code, config
 
   # apply mustache-style template to section text
@@ -42,23 +39,6 @@ render = (target) ->
   # format with highlight-js through docco
   docco.format source, sections, config
 
-  return _.template(fs.readFileSync(target.template, 'UTF-8'))(_.extend({sections}, target.templateOptions))
+  return _.template(fs.readFileSync(options.template, 'UTF-8'))(_.extend({sections}, options.templateOptions))
 
-generate = (target) ->
-  fs.writeFileSync path.join(target.output, 'index.html'), render(target)
-  fs.copySync target.assets, path.join(target.output, '.')
-  return
-
-generate {
-  output          : './gh-pages'
-  template        : './site/template.jst'
-  source          : './luqr.coffee.md'
-  assets          : './site/assets'
-  templateOptions :
-    title    : 'LU, LDL, QR, and Solver'
-    css      : [
-      'css/docco.css'
-      'css/katex.min.css'
-      'css/normalize.css'
-    ]
-}
+module.exports = {literate}
