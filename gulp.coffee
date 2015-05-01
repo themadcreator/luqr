@@ -82,7 +82,7 @@ gulp.task 'git-commit', ->
 
 gulp.task 'git-tag', (cb) ->
   {version} = GET_VERSION()
-  git.tag version, "Created tag for release #{version}", (cb)
+  git.tag version, "Created tag for release #{version}", {args : '-f'}, (cb)
 
 gulp.task 'git-push', (cb) ->
   git.push('origin', 'master', {args : '--tags'}, cb)
