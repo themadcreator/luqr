@@ -1,0 +1,40 @@
+{
+  "name"        : "luqr",
+  "version"     : "0.1.0",
+  "description" : "LU, LDL, and QR Matrix Decomposer and Solver",
+  "main"        : "luqr.min.js",
+  "author"      : "themadcreator@github",
+  "license"     : "MIT",
+  "keywords"    : [
+    "matrix",
+    "ldl",
+    "lu",
+    "qr",
+    "decomposition",
+    "factorization",
+    "solve",
+    "linear"
+  ],
+  "scripts" : {
+    "test"     : "node_modules/.bin/mocha test",
+    "gh-pages" : "coffee site/render.coffee",
+    "serve"    : "node_modules/.bin/http-server gh-pages",
+    "compile"  : "cat ldl.coffee.md | node_modules/.bin/coffee -cbsl",
+    "build"    : "npm run -s compile | node_modules/.bin/uglifyjs -cm --preamble '/* LU, LDL, and QR Matrix Decomposer and Solver. v0.1.0 (c) 2015 Bill Dwyer. MIT License */' -o ldl.min.js"
+  },
+  "devDependencies" : {
+    "chai"          : ">=2.x.x",
+    "coffee-script" : ">=1.x.x",
+    "docco"         : ">=0.7.x",
+    "fs-extra"      : ">=0.6.x",
+    "gl-mat4"       : ">=1.x.x",
+    "handlebars"    : ">=3.x.x",
+    "http-server"   : ">=0.8.x",
+    "katex"         : ">=0.2.x",
+    "marked"        : "^0.3.3",
+    "mocha"         : ">=2.x.x",
+    "ndarray"       : ">=1.x.x",
+    "uglify-js"     : ">=2.x.x",
+    "underscore"    : ">=1.8.x"
+  }
+}
