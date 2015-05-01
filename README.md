@@ -1,8 +1,7 @@
 # Matrix Decomposer and Solver
 
-This javascript library decomposes a matrix {{tex('A')}} using **LU**,
-**LDL**, or **QR** decomposition and solves linear matrix equations such as
-{{tex('A x = b')}}.
+This javascript library decomposes a matrix A using **LU**, **LDL**, or **QR**
+decomposition and solves linear matrix equations such as A * x = b.
 
 100% unit test coverage for correctness and compatibility. No outside dependencies.
 
