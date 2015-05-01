@@ -17,6 +17,7 @@ map        = require 'vinyl-map'
 gulp.task 'test', ->
   gulp.src('test/*-test.coffee', {read : false}).pipe(mocha())
 
+
 ### BUILD ###
 
 gulp.task 'build', ->
@@ -32,6 +33,7 @@ gulp.task 'build', ->
     .pipe(header('/* LU, LDL, and QR Matrix Decomposer and Solver. v<%= version%> (c) <%= year%> Bill Dwyer. MIT License. Build <%= timestamp%> */\n', options))
     .pipe(rename('ldl.min.js'))
     .pipe(gulp.dest('.'))
+
 
 ### RENDER ####
 
@@ -56,6 +58,7 @@ gulp.task 'render-gh-pages', ->
 
 gulp.task 'copy-gh-pages-assets', ->
   gulp.src('./site/assets/**/*').pipe(gulp.dest('./gh-pages'))
+
 
 ### PUBLISH ###
 
@@ -109,6 +112,7 @@ gulp.task 'publish', [
   'publish-bower'
   'publish-gh-pages'
 ]
+
 
 ### DEV TASKS ###
 
