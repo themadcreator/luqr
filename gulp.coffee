@@ -1,5 +1,6 @@
 gulp       = require 'gulp'
 ghPages    = require 'gulp-gh-pages'
+bump       = require 'gulp-bump'
 rename     = require 'gulp-rename'
 coffee     = require 'gulp-coffee'
 mocha      = require 'gulp-mocha'
@@ -64,7 +65,7 @@ gulp.task 'copy-gh-pages-assets', ->
 
 gulp.task 'bump-version', ->
   gulp.src(['./version.json'])
-    .pipe(bump({type : 'Minor'}))
+    .pipe(bump({type : 'minor'}))
     .pipe(gulp.dest('./'))
 
 gulp.task 'set-versions', ->
