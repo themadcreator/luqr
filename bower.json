@@ -2,7 +2,7 @@
   "name": "luqr",
   "description": "LU, LDL, and QR Matrix Decomposer and Solver",
   "homepage": "https://github.com/themadcreator/luqr",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "authors": [
     "themadcreator@github"
