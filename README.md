@@ -21,5 +21,5 @@ bower install luqr
 
 or
 
-[download minified javascript]()
+[download minified javascript](https://raw.githubusercontent.com/themadcreator/luqr/latest/luqr.min.js)
 
