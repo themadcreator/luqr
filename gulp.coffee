@@ -119,7 +119,6 @@ gulp.task 'pre-publish', (cb) ->
 gulp.task 'publish', ['pre-publish'], (cb) ->
   sequence(
     'publish-npm'
-    'publish-bower'
     'publish-gh-pages'
     cb
   )
