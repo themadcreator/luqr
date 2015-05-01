@@ -1,7 +1,34 @@
 # Matrix Decomposer and Solver
 
-This libray decomposes a matrix {{tex('A')}} using LU, LDL, or QR
-decomposition and solves linear matrix equations such as {{tex('A x = b')}}.
+This javascript library decomposes a matrix {{tex('A')}} using **LU**,
+**LDL**, or **QR** decomposition and solves linear matrix equations such as
+{{tex('A x = b')}}.
+
+Written in **literate coffescript**, this document is generated directly from the
+library source.
+
+100% unit test coverage for correctness and compatibility. No outside dependencies.
+
+[github repository](https://github.com/themadcreator/luqr)
+
+### Installation
+
+~~~
+npm install luqr
+~~~
+
+or
+
+~~~
+bower install luqr
+~~~
+
+or
+
+[download minified javascript]()
+
+
+### Usage
 
 For example, to decompose a matrix {{tex('A')}} into lower and upper
 triangular matrices:
@@ -49,18 +76,18 @@ then `x` is
 
 ### What's the Difference between LU, LDL, and QR decomposition?
 
-**LU Decomposition** decomposes a matrix {{tex('A')}} into a lower triangular
-matrix, {{tex('L')}}, and an upper triangular matrix, {{tex('U')}}, such that
-{{tex('A = L U')}}. To solve a linear equation like
-{{tex('A x = b')}} we can use forward substition to solve
-{{tex('L y = b')}} for {{tex('y')}}, then backward subtitution to
-solve {{tex('U x = y')}} for {{tex('x')}}.
+**LU Decomposition** decomposes a **square** matrix {{tex('A')}} into a lower
+triangular matrix, {{tex('L')}}, and an upper triangular matrix, {{tex('U')}},
+such that {{tex('A = L U')}}. To solve a linear equation like
+{{tex('A x = b')}} we can use forward substition to solve {{tex('L y = b')}}
+for {{tex('y')}}, then backward subtitution to solve {{tex('U x = y')}} for
+{{tex('x')}}.
 
-**LDL Decomposition**, on the other hand, decomposes a **symmetric** matrix
-into a lower triangular matrix, {{tex('L')}}, and a diagonal matrix
-{{tex('D')}}, such that {{tex('A = L D L^\\intercal')}}. To solve a linear
-equation like {{tex('A x = b')}} we can use forward substition to solve
-{{tex('L y = b')}} for {{tex('y')}}, then solve diagonal {{tex('D z = y')}}
+**LDL Decomposition**, on the other hand, decomposes a **square**,
+**symmetric** matrix into a lower triangular matrix, {{tex('L')}}, and a
+diagonal matrix {{tex('D')}}, such that {{tex('A = L D L^\\intercal')}}. To
+solve a linear equation like {{tex('A x = b')}} we can use forward substition
+to solve {{tex('L y = b')}} for {{tex('y')}}, then solve diagonal {{tex('D z = y')}}
 for {{tex('z')}}, then finally use backward subtitution to solve
 {{tex('L^\\intercal x = z')}} for {{tex('x')}}.
 
@@ -568,8 +595,8 @@ back into the type of the folded array.
 
 ## Exports
 
-We use universal export. This will work in node.js (CommonJS), ADMs
-(RequireJS), and a `<script>` in the browser.
+This library uses universal module export syntax. This will work in node.js
+(CommonJS), ADMs (RequireJS), and a `<script>` in the browser.
 
       namespace.luqr = {
         solve

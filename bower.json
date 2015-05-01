@@ -1,0 +1,32 @@
+{
+  "name"        : "luqr",
+  "description" : "LU, LDL, and QR Matrix Decomposer and Solver",
+  "homepage"    : "https://github.com/themadcreator/luqr",
+  "version"     : "0.1.0",
+  "license"     : "MIT",
+  "authors"     : ["themadcreator@github"],
+  "main"        : "luqr.min.js",
+  "moduleType"  : [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords" : [
+    "matrix",
+    "ldl",
+    "lu",
+    "qr",
+    "decomposition",
+    "factorization",
+    "solve",
+    "linear"
+  ],
+  "ignore"  : [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "site",
+    "gh-pages"
+  ]
+}
