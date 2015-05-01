@@ -104,7 +104,7 @@ gulp.task 'publish-npm', (cb) ->
 gulp.task 'publish-bower', (cb) ->
   exec 'bower register lurq git@github.com:themadcreator/luqr.git', cb
 
-gulp.task 'publish', (cb) ->
+gulp.task 'pre-publish', (cb) ->
   sequence(
     'test'
     'set-versions'
@@ -113,7 +113,14 @@ gulp.task 'publish', (cb) ->
     'git-tag'
     'git-tag-latest'
     'git-push'
-    ['publish-npm', 'publish-bower', 'publish-gh-pages']
+    cb
+  )
+
+gulp.task 'publish', ['pre-publish'], (cb) ->
+  sequence(
+    'publish-npm'
+    'publish-bower'
+    'publish-gh-pages'
     cb
   )
 
