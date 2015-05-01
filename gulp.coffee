@@ -8,8 +8,9 @@ gutil      = require 'gulp-util'
 git        = require 'gulp-git'
 uglify     = require 'gulp-uglify'
 header     = require 'gulp-header'
-map        = require 'vinyl-map'
 
+map        = require 'vinyl-map'
+sequence   = require 'run-sequence'
 {exec}     = require 'child_process'
 {literate} = require './site/literator'
 
@@ -34,7 +35,7 @@ gulp.task 'build', ->
     .pipe(coffee({bare : true, literate : true}).on('error', gutil.log))
     .pipe(uglify({mangle : true}))
     .pipe(header('/* LU, LDL, and QR Matrix Decomposer and Solver. v<%= version%> (c) <%= year%> Bill Dwyer. MIT License. Build <%= timestamp%> */\n', options))
-    .pipe(rename('ldl.min.js'))
+    .pipe(rename('luqr.min.js'))
     .pipe(gulp.dest('.'))
 
 
@@ -99,28 +100,23 @@ gulp.task 'publish-npm', (cb) ->
 gulp.task 'publish-bower', (cb) ->
   exec 'bower register lurq git@github.com:themadcreator/luqr.git', cb
 
-gulp.task 'publish', [
-  'test'
-  'set-versions'
-  'build'
-  'git-commit'
-  'git-tag'
-  'git-push'
-  'publish-npm'
-  'publish-bower'
-  'publish-gh-pages'
-]
+gulp.task 'publish', (cb) ->
+  sequence(
+    'test'
+    'set-versions'
+    'build'
+    'git-commit'
+    'git-tag'
+    'git-push'
+    ['publish-npm', 'publish-bower', 'publish-gh-pages']
+    cb
+  )
 
 
 ### DEV TASKS ###
 
-DEV_TASKS = [
-  'test'
-  'serve-gh-pages'
-]
-
 gulp.task 'serve-gh-pages', ['render-gh-pages', 'copy-gh-pages-assets'], (cb) ->
-  exec 'npm run serve',
+  exec 'npm run serve', cb
 
-gulp.task 'watch', DEV_TASKS, ->
-  gulp.watch(['./luqr.coffee.md', 'test/**', 'site/**'], DEV_TASKS)
+gulp.task 'watch', ['serve-gh-pages'], ->
+  gulp.watch(['./luqr.coffee.md', 'test/**', 'site/**'], ['serve-gh-pages'])

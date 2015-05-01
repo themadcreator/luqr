@@ -40,6 +40,7 @@
     "marked": "^0.3.3",
     "mocha": ">=2.x.x",
     "ndarray": ">=1.x.x",
+    "run-sequence": "^1.1.0",
     "uglify-js": ">=2.x.x",
     "underscore": ">=1.8.x",
     "vinyl-map": "^1.0.1"
