@@ -85,8 +85,12 @@ gulp.task 'git-tag', (cb) ->
   {version} = GET_VERSION()
   git.tag version, "Created tag for release #{version}", {args : '-f'}, (cb)
 
+gulp.task 'git-tag-latest', (cb) ->
+  {version} = GET_VERSION()
+  git.tag 'latest', "Updating latest tag tag for release #{version}", {args : '-f'}, (cb)
+
 gulp.task 'git-push', (cb) ->
-  git.push('origin', 'master', {args : '--tags'}, cb)
+  git.push('origin', 'master', {args : '--tags -f'}, cb)
 
 gulp.task 'publish-gh-pages', [
   'render-gh-pages'
@@ -107,6 +111,7 @@ gulp.task 'publish', (cb) ->
     'build'
     'git-commit'
     'git-tag'
+    'git-tag-latest'
     'git-push'
     ['publish-npm', 'publish-bower', 'publish-gh-pages']
     cb
