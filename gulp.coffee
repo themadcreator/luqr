@@ -99,11 +99,11 @@ gulp.task 'publish-gh-pages', [
 ], ->
   gulp.src('./gh-pages/**/*').pipe(ghPages())
 
-gulp.task 'publish-npm', ->
-  exec 'npm publish ./'
+gulp.task 'publish-npm', (cb) ->
+  exec 'npm publish ./', cb
 
-gulp.task 'publish-bower', ->
-  exec 'bower register lurq git@github.com:themadcreator/luqr.git'
+gulp.task 'publish-bower', (cb) ->
+  exec 'bower register lurq git@github.com:themadcreator/luqr.git', cb
 
 gulp.task 'publish', [
   'test'

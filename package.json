@@ -35,7 +35,6 @@
     "gulp-rename": "^1.2.2",
     "gulp-uglify": "^1.2.0",
     "gulp-util": "^3.0.4",
-    "handlebars": ">=3.x.x",
     "http-server": ">=0.8.x",
     "katex": ">=0.2.x",
     "marked": "^0.3.3",
