@@ -1,4 +1,4 @@
-# Matrix Decomposer and Solver
+# LUQR - Matrix Decomposer and Solver
 
 This javascript library decomposes a matrix {{tex('A')}} using **LU**,
 **LDL**, or **QR** decomposition and solves linear matrix equations such as

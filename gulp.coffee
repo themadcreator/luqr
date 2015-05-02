@@ -63,6 +63,7 @@ gulp.task 'render-gh-pages', ->
 gulp.task 'copy-gh-pages-assets', ->
   gulp.src('./site/assets/**/*').pipe(gulp.dest('./gh-pages'))
 
+gulp.task 'gh-pages', ['render-gh-pages', 'copy-gh-pages-assets'], ->
 
 ### PUBLISH ###
 
@@ -87,7 +88,7 @@ gulp.task 'git-tag', (cb) ->
 
 gulp.task 'git-tag-latest', (cb) ->
   {version} = GET_VERSION()
-  git.tag 'latest', "Updating latest tag tag for release #{version}", {args : '-f'}, (cb)
+  git.tag 'latest', "Updating latest tag for release #{version}", {args : '-f'}, (cb)
 
 gulp.task 'git-push', (cb) ->
   git.push('origin', 'master', {args : '--tags -f'}, cb)
@@ -126,8 +127,8 @@ gulp.task 'publish', ['pre-publish'], (cb) ->
 
 ### DEV TASKS ###
 
-gulp.task 'serve-gh-pages', ['render-gh-pages', 'copy-gh-pages-assets'], (cb) ->
+gulp.task 'serve', ['gh-pages'], (cb) ->
   exec 'npm run serve', cb
 
-gulp.task 'watch', ['serve-gh-pages'], ->
-  gulp.watch(['./luqr.coffee.md', 'test/**', 'site/**'], ['serve-gh-pages'])
+gulp.task 'watch', ->
+  gulp.watch(['./luqr.coffee.md', 'test/**', 'site/**/*'], ['serve'])
